@@ -106,11 +106,11 @@ final class RangeExtenderImpl : NSObject, CBCentralManagerDelegate, CBPeripheral
                             `if` { val.ok } then: {
                                 `when` { self.ranger?.state != .connected } abort: {
                                     `exec` { self.parent.state_ = .connected }
-                                    `if` { self.rangeService == nil } then: {
+                                    `if` { self.rangeService == nil || self.batteryService == nil } then: {
                                         `exec` { self.ranger!.discoverServices([.rangeServiceUUID, .batteryServiceUUID]) }
                                         `await` { self.rangeService != nil && self.batteryService != nil}
                                     }
-                                    `if` { self.rangeCharacteristics == nil } then: {
+                                    `if` { self.rangeCharacteristics == nil || self.batteryCharacteristics == nil } then: {
                                         `exec` {
                                             self.ranger!.discoverCharacteristics([.rangeCharacteristicsUUID], for: self.rangeService!)
                                             self.ranger!.discoverCharacteristics([.batteryCharacteristicsUUID], for: self.batteryService!)
@@ -119,19 +119,19 @@ final class RangeExtenderImpl : NSObject, CBCentralManagerDelegate, CBPeripheral
                                     }
 
                                     `exec` {
-                                        self.ranger!.setNotifyValue(true, for: self.batteryCharacteristics!)
                                         self.ranger!.setNotifyValue(true, for: self.rangeCharacteristics!)
+                                        self.ranger!.setNotifyValue(true, for: self.batteryCharacteristics!)
                                     }
                                     `cobegin` {
                                         strong {
+                                            exec { self.ranger!.readValue(for: self.rangeCharacteristics!) }
                                             every { self.range != nil } do: {
                                                 self.parent.range_ = self.range
                                                 self.range = nil
                                             }
                                         }
                                         strong {
-                                            // As battery might change slowly, force read value on start.
-                                            exec { self.ranger?.readValue(for: self.batteryCharacteristics!) }
+                                            exec { self.ranger!.readValue(for: self.batteryCharacteristics!) }
                                             every { self.battery != nil } do: {
                                                 self.parent.battery_ = self.battery
                                                 self.battery = nil
