@@ -123,14 +123,14 @@ final class RangeExtenderImpl : NSObject, CBCentralManagerDelegate, CBPeripheral
                                         self.ranger!.setNotifyValue(true, for: self.batteryCharacteristics!)
                                     }
                                     `cobegin` {
-                                        strong {
+                                        with {
                                             exec { self.ranger!.readValue(for: self.rangeCharacteristics!) }
                                             every { self.range != nil } do: {
                                                 self.parent.range_ = self.range
                                                 self.range = nil
                                             }
                                         }
-                                        strong {
+                                        with {
                                             exec { self.ranger!.readValue(for: self.batteryCharacteristics!) }
                                             every { self.battery != nil } do: {
                                                 self.parent.battery_ = self.battery
@@ -171,7 +171,7 @@ final class RangeExtenderImpl : NSObject, CBCentralManagerDelegate, CBPeripheral
         activity (name.Connect, []) { val in
             `exec` { val.connected = false }
             `cobegin` {
-                weak {
+                with (.weak) {
                     `exec` {
                         self.parent.state_ = .connecting
                         self.connectionError = nil
@@ -185,7 +185,7 @@ final class RangeExtenderImpl : NSObject, CBCentralManagerDelegate, CBPeripheral
                         }
                     }
                 }
-                weak {
+                with (.weak) {
                     run (name.Wait, [12]) // Timeout on the ranger is 10 seconds, so we are on the safe side with 12 secs here.
                 }
             }
