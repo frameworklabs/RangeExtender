@@ -106,6 +106,7 @@ final class RangeExtenderImpl : NSObject, CBCentralManagerDelegate, CBPeripheral
                             `if` { val.ok } then: {
                                 `when` { self.ranger?.state != .connected } abort: {
                                     `exec` { self.parent.state_ = .connected }
+                                    
                                     `if` { self.rangeService == nil || self.batteryService == nil } then: {
                                         `exec` { self.ranger!.discoverServices([.rangeServiceUUID, .batteryServiceUUID]) }
                                         `await` { self.rangeService != nil && self.batteryService != nil}
